@@ -1,4 +1,4 @@
-# LocalSend for RISC-V 64 (riscv64)
+﻿# LocalSend for RISC-V 64 (riscv64)
 
 LocalSend 的 riscv64 构建适配 —— 含**完整桌面 GUI**。
 
@@ -23,7 +23,19 @@ LocalSend 的桌面 GUI 是 Flutter 应用，而 **Flutter 官方不发布任何
 本仓库提供的是**适配层**：补丁、构建脚本、打包配置、以及踩过的坑。
 它不含、也不能含 425 MB 的引擎二进制。
 
-如果你没有自建引擎，GUI 这条路会停在：
+## 好消息：引擎做完整之后，构建命令就是标准命令
+
+引擎补齐 artifact 并统一 Dart SDK 版本之后（见 [`docs/06-引擎统一记录.md`](docs/06-引擎统一记录.md)），
+**不需要任何额外参数**：
+
+```bash
+flutter build linux --debug
+flutter build linux --release
+```
+
+不需要 `--local-engine`，不需要 `--no-tree-shake-icons`，不需要改 kernel hash。
+
+以下是「引擎还没做完整」时的症状，供对照：
 
 ```
 ERROR: Target aot_snapshot_release failed:
@@ -91,24 +103,36 @@ cd localsend
 ./scripts/package-deb.sh            # 4.6 MB deb
 ```
 
-### GUI（需要自建引擎）
+### GUI（需要自建引擎，且引擎必须是「完整」的）
 
 ```bash
 export FLUTTER_ROOT=/path/to/flutter-tool
-export ENGINE_SRC=/path/to/engine/src
 
 # 1. 打补丁
 cd app
 git apply ../../patches/0002-cmake-no-error-deprecated.patch
 
-# 2. 构建（必须带 --local-engine，见 docs/01）
+# 2. 构建（引擎完整时无需任何额外参数）
+flutter build linux --release
+```
+
+Rust 部分还需要 `patches/0001-cargokit-riscv64.patch`。
+
+引擎需要具备：完整的 artifact 目录（含 `gen_snapshot`/`impellerc`/`font-subset`/
+`frontend_server_aot`/`shader_lib`）+ 全链统一的 Dart SDK 版本。
+细节见 [`docs/01-引擎前提.md`](docs/01-引擎前提.md) 和 [`docs/06-引擎统一记录.md`](docs/06-引擎统一记录.md)。
+
+**引擎不完整时**，可以用这套参数绕过（我们早期就是这么干的）：
+
+```bash
 flutter build linux --release --no-tree-shake-icons \
   --local-engine-src-path=$ENGINE_SRC \
   --local-engine=riscv64-release \
   --local-engine-host=riscv64-release
 ```
 
-Rust 部分还需要 `patches/0001-cargokit-riscv64.patch`。
+代价是 release 的 kernel 仍要手改 SDK hash、`gen_snapshot` 仍要套包装。
+详见 `docs/05-踩坑清单.md` 的坑 9 / 坑 10。
 
 ---
 
@@ -121,6 +145,7 @@ docs/
   03-deb打包.md         包结构、依赖计算、安装测试
   04-端到端验证.md      传输验证的日志与数据
   05-踩坑清单.md        10 个坑的根因与解法
+  06-引擎统一记录.md    从「能用」到「做好」：Dart SDK 40.0→51.0 统一全过程
 patches/
   0001-cargokit-riscv64.patch           cargokit 认 riscv64
   0002-cmake-no-error-deprecated.patch  弃用警告不升错误
