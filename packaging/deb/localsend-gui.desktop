@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=LocalSend
+Name[zh_CN]=LocalSend 局域网快传
+GenericName=File Transfer
+Comment=Share files with nearby devices
+Comment[zh_CN]=与附近设备互传文件
+Exec=/usr/local/bin/localsend-gui %U
+Icon=localsend-gui
+Terminal=false
+Categories=Network;FileTransfer;
+Keywords=send;share;transfer;lan;localsend;
+StartupNotify=true
+StartupWMClass=org.localsend.localsend_app

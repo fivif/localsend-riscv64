@@ -1,0 +1,31 @@
+﻿# 构建产物
+build/
+dist/
+*.deb
+
+# 打包中间层（含 67MB bundle，绝不入库）
+packaging/gui/opt/
+packaging/gui/usr/
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+ephemeral/
+
+# 引擎二进制
+*.so
+*.so.*
+gen_snapshot
+dartaotruntime
+
+# 上游源码（不在本仓库）
+src/
+
+# 系统噪声
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+*.log

@@ -1,0 +1,5 @@
+#!/bin/sh
+# LocalSend GUI (riscv64) — 自建 Flutter 引擎
+DIR=/opt/localsend-gui
+cd "$DIR" || exit 1
+exec "$DIR/localsend_app" "$@"

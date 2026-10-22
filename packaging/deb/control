@@ -1,0 +1,19 @@
+Package: localsend-gui-riscv64
+Version: 1.18.2
+Section: net
+Priority: optional
+Architecture: riscv64
+Maintainer: Work-temp <root@localhost>
+Installed-Size: 68248
+Depends: libatk1.0-0t64,libayatana-appindicator3-1,libayatana-ido3-0.4-0,libayatana-indicator3-7,libc6,libcairo2,libcairo-gobject2,libdbusmenu-glib4,libepoxy0,libfontconfig1,libgcc-s1,libgdk-pixbuf-2.0-0,libgl1,libglib2.0-0t64,libgtk-3-0t64,libharfbuzz0b,libpango-1.0-0,libpangocairo-1.0-0,libstdc++6,libunwind8,libwayland-client0,libwayland-egl1,zlib1g,libegl1,libgbm1,libsecret-1-0
+X-SpacemiT-Upstream-Version: 1.18.2
+X-SpacemiT-Flutter-Engine: riscv64 (self-built, 3.41.0 / engine 57d5122c)
+Description: LocalSend Desktop GUI for RISC-V64 (SpacemiT K3 / Bianbu)
+ LocalSend 是局域网跨设备文件互传工具。本包是完整桌面 GUI 版，
+ 使用自建的 Flutter riscv64 引擎编译（Flutter 官方不发布 riscv64 产物）。
+ .
+ 已验证：窗口正常渲染、设备发现、HTTPS 收发文件、中文本地化。
+ 采用 AOT 编译（libapp.so），包体比 debug 版小约 10 倍。
+ .
+ 若装过 localsend-riscv64（CLI + 网页直传版），可共存：
+ 两个包共用 53317 端口，但同时只能运行一个。

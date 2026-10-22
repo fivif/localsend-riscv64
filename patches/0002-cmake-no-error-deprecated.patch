@@ -1,0 +1,13 @@
+--- /root/localsend-riscv64/src/localsend/app/linux/CMakeLists.txt.orig-bak	2026-10-22 10:13:05.137500989 +0800
++++ /root/localsend-riscv64/src/localsend/app/linux/CMakeLists.txt	2026-10-22 10:13:05.168491299 +0800
+@@ -89,6 +89,10 @@
+ 
+ # Generated plugin build rules, which manage building the plugins and adding
+ # them to the application.
++# riscv64: ayatana appindicator 把 app_indicator_new 标了 deprecated，
++# 而插件自带 -Werror，会把弃用警告升级成错误。降回警告。
++add_compile_options(-Wno-error=deprecated-declarations)
++
+ include(flutter/generated_plugins.cmake)
+ 
+ 

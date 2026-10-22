@@ -1,0 +1,22 @@
+--- /root/localsend-riscv64/src/localsend/packages/localsend_isolates/rust_builder/cargokit/build_tool/lib/src/target.dart.orig-bak	2026-10-22 10:03:34.482901063 +0800
++++ /root/localsend-riscv64/src/localsend/packages/localsend_isolates/rust_builder/cargokit/build_tool/lib/src/target.dart	2026-10-22 10:03:34.519532651 +0800
+@@ -59,6 +59,10 @@
+       flutter: 'linux-arm64',
+     ),
+     Target(
++      rust: 'riscv64a23-unknown-linux-gnu',
++      flutter: 'linux-riscv64',
++    ),
++    Target(
+       rust: 'x86_64-apple-darwin',
+       darwinPlatform: 'macosx',
+       darwinArch: 'x86_64',
+@@ -116,6 +120,8 @@
+       final arch = runCommand('arch', []).stdout as String;
+       if (arch.trim() == 'aarch64') {
+         return [Target.forRustTriple('aarch64-unknown-linux-gnu')!];
++      } else if (arch.trim().startsWith('riscv64')) {
++        return [Target.forRustTriple('riscv64a23-unknown-linux-gnu')!];
+       } else {
+         return [Target.forRustTriple('x86_64-unknown-linux-gnu')!];
+       }
