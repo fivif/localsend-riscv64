@@ -164,18 +164,20 @@ localsend-riscv64
 依赖从 `readelf -d` 的 `NEEDED` 精确计算（23 个直接依赖），
 另加 3 个 `dlopen` 加载的库：`libegl1`、`libgbm1`、`libsecret-1-0`。
 
+不使用 `ldd` —— 它输出递归闭包，会得出 69 个冗余包名。
+注意中文 locale 下 `readelf` 输出为 `共享库：[libxxx.so]`，
+需用 `sed 's/.*\[\(.*\)\]/\1/'` 提取，`awk '{print $5}'` 会取错字段。
+
 ---
 
 ## 文档
 
-| 文档 | 内容 |
-|---|---|
-| [docs/01-引擎前提](docs/01-引擎前提.md) | 引擎完备性检查清单；`--local-engine` 的用途与代价 |
-| [docs/02-GUI构建记录](docs/02-GUI构建记录.md) | debug 与 release 构建全过程 |
-| [docs/03-deb打包](docs/03-deb打包.md) | 包结构、依赖计算、安装验证 |
-| [docs/04-端到端验证](docs/04-端到端验证.md) | 传输验证的日志与数据 |
-| [docs/05-踩坑清单](docs/05-踩坑清单.md) | 构建过程中的问题与解法 |
-| [docs/06-引擎统一记录](docs/06-引擎统一记录.md) | Dart SDK 版本统一过程 |
+- [docs/LocalSend特有改动](docs/LocalSend特有改动.md)：本项目的 6 个专属问题
+  （cargokit 映射、`-Werror` 冲突、pub 版本冲突、`shader_lib` 位置、
+  接收文件 mtime、deb 依赖计算）
+
+引擎层面的问题见
+[flutter-riscv64-linux](https://github.com/fivif/flutter-riscv64-linux) 的 docs。
 
 ---
 
