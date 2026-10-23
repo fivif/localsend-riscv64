@@ -1,180 +1,170 @@
-﻿# LocalSend for RISC-V 64 (riscv64)
+# LocalSend for RISC-V 64
 
-LocalSend 的 riscv64 构建适配 —— 含**完整桌面 GUI**。
+**为 [localsend/localsend](https://github.com/localsend/localsend) 提供 riscv64 构建支持，含完整桌面 GUI。**
 
-已在 **SpacemiT K3 (Bianbu 4.0.1, kernel 6.18.3, riscv64)** 上实测：GUI 编译成功、窗口正常渲染、
-设备发现、HTTPS 收发文件、中文本地化全部打通。
+[![Platform](https://img.shields.io/badge/platform-linux%20%7C%20riscv64-blue)]()
+[![Upstream](https://img.shields.io/badge/upstream-1.18.2-informational)]()
+[![GUI](https://img.shields.io/badge/GUI-Flutter%203.41%20%7C%20AOT-brightgreen)]()
+[![License](https://img.shields.io/badge/license-Apache--2.0-lightgrey)](LICENSE)
+
+已在 SpacemiT K3（Bianbu 4.0.1，kernel 6.18.3，riscv64）上完成端到端验证：
+GUI 正常渲染、设备发现、HTTPS 传输、中文本地化，两设备间传输 MD5 一致。
 
 ![LocalSend GUI on riscv64](screenshots/02-release.png)
 
 ---
 
-## ⚠️ 先读这一段：本仓库**不包含** Flutter 引擎
+## 快速开始
 
-LocalSend 的桌面 GUI 是 Flutter 应用，而 **Flutter 官方不发布任何 riscv64 Linux 引擎产物**。
-
-所以：
-
-| 你要什么 | 需要什么 |
-|---|---|
-| **CLI + 网页直传** | 只要 Rust 工具链，`scripts/build-riscv64.sh` 直接能编 |
-| **完整桌面 GUI** | **必须自己有 riscv64 Flutter 引擎**，见 [`docs/01-引擎前提.md`](docs/01-引擎前提.md) |
-
-本仓库提供的是**适配层**：补丁、构建脚本、打包配置、以及踩过的坑。
-它不含、也不能含 425 MB 的引擎二进制。
-
-## 好消息：引擎做完整之后，构建命令就是标准命令
-
-引擎补齐 artifact 并统一 Dart SDK 版本之后（见 [`docs/06-引擎统一记录.md`](docs/06-引擎统一记录.md)），
-**不需要任何额外参数**：
+### 安装预编译包
 
 ```bash
-flutter build linux --debug
+# 完整桌面 GUI
+sudo dpkg -i localsend-gui-riscv64_1.18.2_riscv64.deb
+localsend-gui
+
+# 或：终端界面 + 网页直传（不依赖 GUI）
+sudo dpkg -i localsend-riscv64_1.18.2_riscv64.deb
+```
+
+| 包 | 大小 | 内容 |
+|---|---|---|
+| `localsend-gui-riscv64_1.18.2_riscv64.deb` | 20.1 MB | 完整桌面 GUI（Flutter AOT） |
+| `localsend-riscv64_1.18.2_riscv64.deb` | 4.6 MB | `localsend-cli` 终端界面 + `localsend-link` 网页直传 |
+
+两个包可共存，共用 53317 端口，但同一时间只能运行一个实例。
+
+### 从源码构建
+
+GUI 需要一个可用的 riscv64 Flutter 引擎。如果还没有，见
+[flutter-riscv64-linux](https://github.com/fivif/flutter-riscv64-linux)（含预编译产物）。
+
+```bash
+# 1. 上游源码
+git clone https://github.com/localsend/localsend.git
+cd localsend && git checkout d11fdb1
+
+# 2. 应用补丁
+git apply <this-repo>/patches/0001-cargokit-riscv64.patch
+git apply <this-repo>/patches/0002-cmake-no-error-deprecated.patch
+
+# 3. 构建
+cd app
 flutter build linux --release
 ```
 
-不需要 `--local-engine`，不需要 `--no-tree-shake-icons`，不需要改 kernel hash。
+CLI 与网页直传不依赖 Flutter 引擎，只需 Rust 工具链：
 
-以下是「引擎还没做完整」时的症状，供对照：
-
-```
-ERROR: Target aot_snapshot_release failed:
-  Failed to find ".../bin/cache/artifacts/engine/linux-riscv64-release/gen_snapshot"
+```bash
+./scripts/build-riscv64.sh
+./scripts/package-deb.sh
 ```
 
 ---
 
-## 已验证的成果
+## 与上游的差异
+
+本仓库不复制上游源码。构建时从上游 clone，仅应用两个补丁。
+
+| 补丁 | 行数 | 性质 |
+|---|---|---|
+| [`0001-cargokit-riscv64.patch`](patches/0001-cargokit-riscv64.patch) | +6 | cargokit 的 target 映射表缺少 riscv64 条目 |
+| [`0002-cmake-no-error-deprecated.patch`](patches/0002-cmake-no-error-deprecated.patch) | +4 | 插件自带 `-Werror` 与 ayatana 的 deprecation 标记冲突 |
+
+<details>
+<summary><b>补丁 0001 中 triple 的说明</b></summary>
+
+补丁当前使用 `riscv64a23-unknown-linux-gnu`，这是 SpacemiT 定制工具链的私有 triple。
+
+选用它是因为板上 `rustc -vV` 报 `host: riscv64a23-unknown-linux-gnu`，且
+`$(rustc --print sysroot)/lib/rustlib/` 下仅此一个 triple 有 std，系统未安装 rustup。
+
+通用环境下应使用标准 triple `riscv64gc-unknown-linux-gnu`，见
+[`patches/0003-上游建议版.md`](patches/0003-上游建议版.md)。
+</details>
+
+---
+
+## 验证状态
+
+### 已完成
 
 | 项目 | 结果 |
 |---|---|
-| GUI 编译（debug） | ✅ bundle 657 MB，`kernel_blob.bin` 运行时 JIT |
-| GUI 编译（release AOT） | ✅ bundle 67 MB，`libapp.so` 15.7 MB，242 秒 |
-| 窗口渲染 | ✅ 1024–1026 ms 出现，940 色，品牌绿在位 |
-| 设备发现 | ✅ 认出 `聪明的椰子 (10.5.90.193, model: Redmi)` |
-| **端到端传文件** | ✅ 296,031 B JPEG，MD5 双向一致，原始 mtime 保留 |
-| 中文本地化 | ✅ 设备名「明亮的覆盆子」 |
-| deb 打包 | ✅ 20.5 MB，`dpkg -i` 退出码 0，依赖零缺失，desktop 校验干净 |
+| GUI 编译（debug / release） | 成功，bundle 657 MB / 66 MB |
+| 窗口渲染 | 1024–1400 ms 出现，无黑屏 |
+| 设备发现 | 识别对端设备（Redmi，10.5.90.193） |
+| 端到端传输 | 296,031 B JPEG，双向 MD5 一致，原始 mtime 保留 |
+| 中文本地化 | 设备名自动生成（「明亮的覆盆子」） |
+| deb 安装 | `dpkg -i` 退出码 0，依赖零缺失，desktop 校验通过 |
+| 引擎一致性 | 包内 `.so` sha256 `3dc3cde1…`，与引擎仓库的干净构建产物一致 |
 
-### 未验证
+### 已知限制
 
-- 反向发送（板子 → 手机）
-- 大文件（只测了 289 KB）、多文件、文件夹
-- 断点续传、失败重试
-- 托盘图标实际显示（测试环境是 Xvfb，无系统托盘）
-- **真实 Xorg / Wayland 下的显示**（全程 Xvfb + llvmpipe）
-
----
-
-## 安装（从 deb）
-
-```bash
-sudo dpkg -i localsend-gui-riscv64_1.18.2_riscv64.deb
-localsend-gui
-```
-
-包结构：
-
-```
-/opt/localsend-gui/                  67 MB
-├── localsend_app                    ELF64 RISC-V
-├── lib/libapp.so                    AOT 机器码 15.7 MB
-├── lib/libflutter_linux_gtk.so      自建引擎 14 MB
-├── lib/librust_lib_localsend_app.so Rust core 24 MB
-└── data/icudtl.dat + flutter_assets/
-
-/usr/local/bin/localsend-gui
-/usr/share/applications/localsend-gui.desktop
-/usr/share/icons/hicolor/256x256/apps/localsend-gui.png
-```
-
-可与 CLI 版包 `localsend-riscv64` 共存（两个包共用 53317 端口，但同时只能跑一个）。
+1. **仅验证了接收方向**：手机 → 板子。板子 → 手机的发送未测试。
+2. **未测试大文件**：最大传输为 289 KB，未验证 GB 级文件。
+3. **未测试多文件与目录传输**。
+4. **未测试断点续传与失败重试**。
+5. **托盘图标未验证**：测试环境为 Xvfb，无系统托盘。
+6. **显示验证在 Xvfb + llvmpipe 下完成**：真实 Xorg / Wayland 未验证。
 
 ---
 
-## 从源码构建
+## 为什么需要这个
 
-### CLI + 网页直传（不需要 Flutter）
+上游 LocalSend 的桌面 GUI 是 Flutter 应用。Flutter 官方未发布 riscv64 Linux
+引擎产物（`storage.googleapis.com/flutter_infra_release/flutter/<rev>/linux-riscv64/artifacts.zip`
+始终返回 404），因此在该架构上无法直接用 `flutter build linux` 构建。
 
-```bash
-git clone https://github.com/localsend/localsend.git
-cd localsend
-./scripts/build-riscv64.sh          # Rust core + CLI + link
-./scripts/package-deb.sh            # 4.6 MB deb
-```
+本仓库解决两件事：
 
-### GUI（需要自建引擎，且引擎必须是「完整」的）
+1. **引擎**：见 [flutter-riscv64-linux](https://github.com/fivif/flutter-riscv64-linux)，
+   完成从源码构建、验证与分发。
+2. **适配**：上表两处补丁，使上游源码可在 riscv64 上编译。
 
-```bash
-export FLUTTER_ROOT=/path/to/flutter-tool
-
-# 1. 打补丁
-cd app
-git apply ../../patches/0002-cmake-no-error-deprecated.patch
-
-# 2. 构建（引擎完整时无需任何额外参数）
-flutter build linux --release
-```
-
-Rust 部分还需要 `patches/0001-cargokit-riscv64.patch`。
-
-引擎需要具备：完整的 artifact 目录（含 `gen_snapshot`/`impellerc`/`font-subset`/
-`frontend_server_aot`/`shader_lib`）+ 全链统一的 Dart SDK 版本。
-细节见 [`docs/01-引擎前提.md`](docs/01-引擎前提.md) 和 [`docs/06-引擎统一记录.md`](docs/06-引擎统一记录.md)。
-
-**引擎不完整时**，可以用这套参数绕过（我们早期就是这么干的）：
-
-```bash
-flutter build linux --release --no-tree-shake-icons \
-  --local-engine-src-path=$ENGINE_SRC \
-  --local-engine=riscv64-release \
-  --local-engine-host=riscv64-release
-```
-
-代价是 release 的 kernel 仍要手改 SDK hash、`gen_snapshot` 仍要套包装。
-详见 `docs/05-踩坑清单.md` 的坑 9 / 坑 10。
+上游业务代码未作任何修改。
 
 ---
 
-## 仓库结构
+## 包内容
 
 ```
-docs/
-  01-引擎前提.md        自建引擎需要什么、当前缺口在哪
-  02-GUI构建记录.md     从零到 GUI 的完整过程
-  03-deb打包.md         包结构、依赖计算、安装测试
-  04-端到端验证.md      传输验证的日志与数据
-  05-踩坑清单.md        10 个坑的根因与解法
-  06-引擎统一记录.md    从「能用」到「做好」：Dart SDK 40.0→51.0 统一全过程
-patches/
-  0001-cargokit-riscv64.patch           cargokit 认 riscv64
-  0002-cmake-no-error-deprecated.patch  弃用警告不升错误
-  0003-上游建议版.md                    推上游时应改用的标准 triple
-packaging/deb/        control / postinst / launcher / desktop
-scripts/              CLI 构建、deb 打包、5 个验证脚本
-screenshots/          三张运行截图
-engine-notes/         gen_snapshot 包装脚本（AOT hash 修正）
+localsend-gui-riscv64
+├── /opt/localsend-gui/                    67 MB
+│   ├── localsend_app                      ELF64 RISC-V
+│   ├── lib/libapp.so                      15,729,544 B  AOT 机器码
+│   ├── lib/libflutter_linux_gtk.so        13,996,360 B  引擎
+│   ├── lib/librust_lib_localsend_app.so   24,133,064 B  Rust core
+│   └── data/icudtl.dat + flutter_assets/
+├── /usr/local/bin/localsend-gui
+├── /usr/share/applications/localsend-gui.desktop
+└── /usr/share/icons/hicolor/256x256/apps/localsend-gui.png
+
+localsend-riscv64
+└── /usr/local/bin/{localsend-cli, localsend-link, localsend-launch, localsend-share}
 ```
+
+依赖从 `readelf -d` 的 `NEEDED` 精确计算（23 个直接依赖），
+另加 3 个 `dlopen` 加载的库：`libegl1`、`libgbm1`、`libsecret-1-0`。
 
 ---
 
-## 一个必须知道的坑
+## 文档
 
-补丁 `0001` 里用的是 **`riscv64a23-unknown-linux-gnu`** —— 这是 SpacemiT 定制工具链的
-私有 triple，**不通用**。
-
-之所以用它：板子的 `rustc -vV` 报 `host: riscv64a23-unknown-linux-gnu`，
-且 `$(rustc --print sysroot)/lib/rustlib/` 下**只有这一个 triple 有 std**，系统没装 rustup。
-
-**推上游 / 换通用环境请用** `riscv64gc-unknown-linux-gnu`，见
-[`patches/0003-上游建议版.md`](patches/0003-上游建议版.md)。
+| 文档 | 内容 |
+|---|---|
+| [docs/01-引擎前提](docs/01-引擎前提.md) | 引擎完备性检查清单；`--local-engine` 的用途与代价 |
+| [docs/02-GUI构建记录](docs/02-GUI构建记录.md) | debug 与 release 构建全过程 |
+| [docs/03-deb打包](docs/03-deb打包.md) | 包结构、依赖计算、安装验证 |
+| [docs/04-端到端验证](docs/04-端到端验证.md) | 传输验证的日志与数据 |
+| [docs/05-踩坑清单](docs/05-踩坑清单.md) | 构建过程中的问题与解法 |
+| [docs/06-引擎统一记录](docs/06-引擎统一记录.md) | Dart SDK 版本统一过程 |
 
 ---
 
 ## License
 
-[Apache License 2.0](LICENSE) —— 与上游 [localsend/localsend](https://github.com/localsend/localsend) 一致。
+本仓库内容（补丁、脚本、文档）以 **Apache-2.0** 发布，与上游
+[localsend/localsend](https://github.com/localsend/localsend) 一致。
 
-本仓库的适配内容（补丁、脚本、文档）同样以 Apache 2.0 发布。
-
-上游源码本身不在本仓库内，请从其官方仓库获取。
+上游源码不包含在本仓库内，请从其[官方仓库](https://github.com/localsend/localsend)获取。
