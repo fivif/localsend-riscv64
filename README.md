@@ -10,7 +10,9 @@
 已在 SpacemiT K3（Bianbu 4.0.1，kernel 6.18.3，riscv64）上完成端到端验证：
 GUI 正常渲染、设备发现、HTTPS 传输、中文本地化，两设备间传输 MD5 一致。
 
-![LocalSend GUI on riscv64](screenshots/02-release.png)
+![LocalSend GUI on riscv64](screenshots/02-wayland-window.png)
+
+运行于 labwc（Wayland）合成器，窗口由真实合成器提供装饰；界面为 2 倍放大的窗口区域。
 
 ---
 
@@ -92,12 +94,26 @@ CLI 与网页直传不依赖 Flutter 引擎，只需 Rust 工具链：
 | 项目 | 结果 |
 |---|---|
 | GUI 编译（debug / release） | 成功，bundle 657 MB / 66 MB |
-| 窗口渲染 | 1024–1400 ms 出现，无黑屏 |
+| 窗口渲染（Wayland / labwc） | 402×528 窗口居中，1230 种颜色，品牌色在位，暗像素 6.3%（文字与图标） |
+| 窗口渲染（Xvfb） | 1024–1400 ms 出现，无黑屏 |
 | 设备发现 | 识别对端设备（Redmi，10.5.90.193） |
 | 端到端传输 | 296,031 B JPEG，双向 MD5 一致，原始 mtime 保留 |
-| 中文本地化 | 设备名自动生成（「明亮的覆盆子」） |
+| 中文本地化 | 设备名「明亮的覆盆子」，界面文案完整 |
 | deb 安装 | `dpkg -i` 退出码 0，依赖零缺失，desktop 校验通过 |
 | 引擎一致性 | 包内 `.so` sha256 `3dc3cde1…`，与引擎仓库的干净构建产物一致 |
+
+### 显示环境说明
+
+截图取自 **labwc（wlroots）Wayland 合成器**，非 Xvfb。该合成器以 `headless` 后端运行，
+输出分辨率固定 1280×720，因此窗口在画面中占比较小。
+
+真实 DP 输出（`card2-DP-1`，支持 1920×1080 与 3840×2160）当前由 SDDM 的 greeter 会话持有，
+无法并行接入。这是环境限制，非应用缺陷。
+
+**渲染后端**：日志显示 `MESA_LOADER_DRIVER_OVERRIDE=pvr` 生效，但
+`Zink requires the nullDescriptor feature of KHR/EXT robustness2` 导致 PVR 路径失败，
+实际回退至 Impeller + OpenGL ES（llvmpipe 软件渲染）。GPU 硬件状态正常
+（驱动 OK、固件 OK），问题在于 Wayland 下的 zink 特性协商。
 
 ### 已知限制
 
@@ -105,8 +121,9 @@ CLI 与网页直传不依赖 Flutter 引擎，只需 Rust 工具链：
 2. **未测试大文件**：最大传输为 289 KB，未验证 GB 级文件。
 3. **未测试多文件与目录传输**。
 4. **未测试断点续传与失败重试**。
-5. **托盘图标未验证**：测试环境为 Xvfb，无系统托盘。
-6. **显示验证在 Xvfb + llvmpipe 下完成**：真实 Xorg / Wayland 未验证。
+5. **托盘图标未验证**：无系统托盘环境。
+6. **GPU 呈现路径未打通**：所有渲染均为软件渲染（见上）。
+7. **真机 DP 输出未直接验证**：显示输出被 SDDM 占用。
 
 ---
 
